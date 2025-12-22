@@ -66,6 +66,37 @@ Magnetic attachment systems, standoffs, screw pockets, and internal mounting sol
 - Path generation techniques
 - Code location index
 
+### [`research-tools/`](research-tools/index.md)
+**Research and Reference Tools**
+
+CLI tools for gathering information during development - web search and local offline datasets.
+
+**Contains:**
+- Kiwix local dataset search (Wikipedia, Stack Overflow, DevDocs)
+- Tavily web search (current information, news)
+- Research workflow guidance
+- When to use each tool
+
+### [`external-libraries/`](external-libraries/index.md)
+**External OpenSCAD Libraries**
+
+Integration documentation for external libraries that provide hardware components, PCB definitions, and mounting patterns.
+
+**Contains:**
+- NopSCADlib (PCBs, connectors, hardware)
+- PiHoles (Raspberry Pi mounting)
+- Integration patterns and usage
+
+### [`design-language/`](design-language/index.md)
+**Retro Design Reference**
+
+Reference documentation for the industrial designers and iconic products that inform RetroCase aesthetics.
+
+**Contains:**
+- Designer profiles (Dieter Rams, Mario Bellini, etc.)
+- Iconic product catalog (Braun RT 20, Olivetti Divisumma, JVC Videosphere)
+- Parametric patterns derived from classic designs
+
 ## Domain Structure Pattern
 
 Each domain follows a consistent structure:

@@ -72,6 +72,7 @@ module shell_monolithic(
                 cuboid(
                     [lip_w, lip_h, lip_depth + 0.01],
                     rounding = lip_r,
+                    edges = "Z",  // Only round vertical edges (lip_r may exceed lip_depth)
                     anchor = TOP
                 );
             }
@@ -82,7 +83,7 @@ module shell_monolithic(
                 position(FWD)
                 cuboid(
                     [opening[0], wall + 1, opening[1]],
-                    rounding = opening_r,
+                    rounding = min(opening_r, wall),  // Clamp to wall thickness
                     edges = "Y",
                     anchor = FWD
                 );

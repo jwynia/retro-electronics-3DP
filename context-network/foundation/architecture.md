@@ -14,6 +14,8 @@ This document describes the technical architecture of RetroCase: how the codebas
 ### Required Software
 - **OpenSCAD 2021.x or later** - The rendering engine
 - **BOSL2 library** - Included as git submodule in `lib/BOSL2/`
+- **NopSCADlib** - Hardware components, included as git submodule in `lib/NopSCADlib/`
+- **PiHoles** - Pi mounting, included as git submodule in `lib/PiHoles/`
 
 ### Setup
 ```bash
@@ -22,9 +24,17 @@ This document describes the technical architecture of RetroCase: how the codebas
 
 This script:
 1. Checks for OpenSCAD installation
-2. Initializes the BOSL2 submodule
+2. Initializes all library submodules (BOSL2, NopSCADlib, PiHoles)
 3. Creates required directories
-4. Runs a test render
+4. Verifies library installation
+5. Runs a test render
+
+New clones can also initialize manually:
+```bash
+git clone --recurse-submodules <repo-url>
+# Or after cloning:
+git submodule update --init --recursive
+```
 
 ## Directory Structure
 
@@ -36,7 +46,9 @@ retrocase/
 ├── .context-network.md    # Context network discovery
 ├── context-network/       # All planning/architecture docs
 ├── lib/
-│   └── BOSL2/             # BOSL2 library (git submodule)
+│   ├── BOSL2/             # BOSL2 library (git submodule)
+│   ├── NopSCADlib/        # Hardware components (git submodule)
+│   └── PiHoles/           # Pi mounting holes (git submodule)
 ├── scripts/
 │   ├── setup.sh           # Environment setup
 │   └── render.sh          # Render test script
@@ -114,15 +126,31 @@ See [`../domains/bosl2-integration/`](../domains/bosl2-integration/index.md) for
 
 ## External Library Dependencies
 
-### Required
-- **BOSL2** - Core dependency, included as submodule
+All libraries are included as git submodules in `lib/`.
 
-### Optional
-- **NopSCADlib** - PCB definitions (Pi, Arduino, ESP32)
-- **SBC_Case_Builder** - Board mounting patterns
-- **PiHoles** - Raspberry Pi mounting hole positions
+### BOSL2 (Required)
+Core geometry library providing attachment system, shapes, and utilities.
+```openscad
+include <BOSL2/std.scad>
+```
 
-Core shell/face generation works without optional dependencies.
+### NopSCADlib (Installed)
+Hardware component library with PCB definitions (Pi, Arduino, ESP32), connectors, displays, and more.
+```openscad
+include <NopSCADlib/lib.scad>
+use <NopSCADlib/vitamins/pcb.scad>
+```
+See [`../domains/external-libraries/nopscadlib.md`](../domains/external-libraries/nopscadlib.md)
+
+### PiHoles (Installed)
+Lightweight Raspberry Pi mounting library.
+```openscad
+use <PiHoles/PiHoles.scad>
+```
+See [`../domains/external-libraries/piholes.md`](../domains/external-libraries/piholes.md)
+
+### Reference Only (Not Installed)
+- **SBC_Case_Builder** - Study for patterns, different design philosophy
 
 ## Build and Render Infrastructure
 

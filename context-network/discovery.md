@@ -18,6 +18,12 @@ This is the main navigation hub for the RetroCase context network. The context n
 ### I'm creating a new module
 → Follow [`processes/module-creation.md`](processes/module-creation.md)
 
+### I need to look something up
+→ See [`domains/research-tools/index.md`](domains/research-tools/index.md)
+
+### I need design inspiration
+→ See [`domains/design-language/index.md`](domains/design-language/index.md)
+
 ### I want to know where code lives
 → Check location indexes in each domain (e.g., [`domains/shells/locations.md`](domains/shells/locations.md))
 
@@ -50,6 +56,9 @@ Deep knowledge organized by technical domain.
 - [`hardware/`](domains/hardware/index.md) - Magnetic attachment, standoffs, mounting
 - [`profiles/`](domains/profiles/index.md) - 2D profile generation
 - [`bosl2-integration/`](domains/bosl2-integration/index.md) - BOSL2 library usage patterns
+- [`research-tools/`](domains/research-tools/index.md) - Web search and local dataset tools
+- [`external-libraries/`](domains/external-libraries/index.md) - NopSCADlib, PiHoles integration
+- [`design-language/`](domains/design-language/index.md) - Retro design references and patterns
 
 ### Processes - How We Work
 [`processes/index.md`](processes/index.md)

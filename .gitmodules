@@ -1,0 +1,15 @@
+[submodule "lib/NopSCADlib"]
+	path = lib/NopSCADlib
+	url = https://github.com/nophead/NopSCADlib.git
+[submodule "lib/PiHoles"]
+	path = lib/PiHoles
+	url = https://github.com/daprice/PiHoles.git
+[submodule "lib/BOSL2"]
+	path = lib/BOSL2
+	url = https://github.com/BelfrySCAD/BOSL2.git
+[submodule "lib/knurled-openscad"]
+	path = lib/knurled-openscad
+	url = https://github.com/smkent/knurled-openscad.git
+[submodule "lib/battery_lib"]
+	path = lib/battery_lib
+	url = https://github.com/kartchnb/battery_lib.git

@@ -36,23 +36,23 @@ else
     fi
 fi
 
-# Initialize BOSL2 submodule
+# Initialize all library submodules
 echo ""
-echo "=== Initializing BOSL2 ==="
+echo "=== Initializing Libraries ==="
 
-if [ -d "$PROJECT_ROOT/lib/BOSL2/.git" ] || [ -f "$PROJECT_ROOT/lib/BOSL2/std.scad" ]; then
-    echo "✓ BOSL2 already initialized"
+cd "$PROJECT_ROOT"
+
+if [ -f "$PROJECT_ROOT/.gitmodules" ]; then
+    echo "Initializing git submodules..."
+    git submodule update --init --recursive
+    echo "✓ Submodules initialized"
 else
-    if [ -f "$PROJECT_ROOT/.gitmodules" ]; then
-        echo "Initializing git submodule..."
-        cd "$PROJECT_ROOT"
-        git submodule update --init --recursive
-    else
-        echo "Cloning BOSL2 directly..."
-        mkdir -p "$PROJECT_ROOT/lib"
-        git clone https://github.com/BelfrySCAD/BOSL2.git "$PROJECT_ROOT/lib/BOSL2"
-    fi
-    echo "✓ BOSL2 installed"
+    echo "No .gitmodules found - cloning libraries directly..."
+    mkdir -p "$PROJECT_ROOT/lib"
+    git clone https://github.com/BelfrySCAD/BOSL2.git "$PROJECT_ROOT/lib/BOSL2"
+    git clone https://github.com/nophead/NopSCADlib.git "$PROJECT_ROOT/lib/NopSCADlib"
+    git clone https://github.com/daprice/PiHoles.git "$PROJECT_ROOT/lib/PiHoles"
+    echo "✓ Libraries cloned"
 fi
 
 # Create necessary directories
@@ -72,11 +72,40 @@ chmod +x "$PROJECT_ROOT/scripts/render.sh" 2>/dev/null || true
 echo ""
 echo "=== Verifying setup ==="
 
+# Check BOSL2 (required)
 if [ -f "$PROJECT_ROOT/lib/BOSL2/std.scad" ]; then
     echo "✓ BOSL2 std.scad found"
 else
     echo "✗ BOSL2 std.scad not found - check lib/BOSL2/"
     exit 1
+fi
+
+# Check NopSCADlib (optional but recommended)
+if [ -d "$PROJECT_ROOT/lib/NopSCADlib/vitamins" ]; then
+    echo "✓ NopSCADlib found (PCB definitions, hardware)"
+else
+    echo "⚠ NopSCADlib not found - some hardware features unavailable"
+fi
+
+# Check PiHoles (optional)
+if [ -f "$PROJECT_ROOT/lib/PiHoles/PiHoles.scad" ]; then
+    echo "✓ PiHoles found (Raspberry Pi mounting)"
+else
+    echo "⚠ PiHoles not found - Pi mounting features unavailable"
+fi
+
+# Check knurled-openscad (optional)
+if [ -f "$PROJECT_ROOT/lib/knurled-openscad/knurled.scad" ]; then
+    echo "✓ knurled-openscad found (knob textures)"
+else
+    echo "⚠ knurled-openscad not found - knurling features unavailable"
+fi
+
+# Check battery_lib (optional)
+if [ -f "$PROJECT_ROOT/lib/battery_lib/battery_lib.scad" ]; then
+    echo "✓ battery_lib found (battery dimensions)"
+else
+    echo "⚠ battery_lib not found - battery compartment features unavailable"
 fi
 
 # Test render if OpenSCAD is available

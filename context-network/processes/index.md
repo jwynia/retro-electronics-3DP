@@ -63,6 +63,32 @@ Checklist to run through before committing changes.
 - Test coverage
 - Context network updates
 
+### [`aesthetic-verification.md`](aesthetic-verification.md)
+**Pattern Aesthetic Verification**
+
+Checklists for verifying designs match their intended retro aesthetic patterns.
+
+**When to use:** When reviewing designs for aesthetic fidelity
+
+**Key topics:**
+- Pattern-specific checklists (Braun Box, Olivetti Wedge, Space Age, Danish Slab)
+- Measurable criteria vs visual checks
+- Reference image comparison
+- Verification workflow
+
+### [`design-review-process.md`](design-review-process.md)
+**Complete Design Review**
+
+Comprehensive process for reviewing designs before commit, covering both technical and aesthetic aspects.
+
+**When to use:** Before committing new or significantly modified designs
+
+**Key topics:**
+- Technical review (code quality, renders, dimensions)
+- Aesthetic review (pattern compliance, metrics)
+- Integration review (assembly, printability)
+- Recording review results
+
 ## Process Usage Patterns
 
 ### For New Contributors
@@ -74,6 +100,8 @@ Checklist to run through before committing changes.
 - **Creating a new shell:** → [`module-creation.md`](module-creation.md) + [`../domains/shells/`](../domains/shells/index.md)
 - **Testing changes:** → [`testing-rendering.md`](testing-rendering.md)
 - **Debugging render issues:** → [`development-workflow.md#debugging`](development-workflow.md)
+- **Checking aesthetic correctness:** → [`aesthetic-verification.md`](aesthetic-verification.md)
+- **Full design review:** → [`design-review-process.md`](design-review-process.md)
 
 ### For Code Review
 1. Use [`code-review-checklist.md`](code-review-checklist.md)

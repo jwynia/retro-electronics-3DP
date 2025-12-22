@@ -40,15 +40,21 @@ faceplate_bezel(
 ## Installation
 
 ```bash
-git clone --recursive https://github.com/yourname/retrocase.git
+git clone --recurse-submodules https://github.com/yourname/retrocase.git
 cd retrocase
 ./scripts/setup.sh
 ```
 
-Or manually:
-1. Clone this repo
-2. Run `git submodule update --init` to get BOSL2
-3. Add the `retrocase` directory to your OpenSCAD library path
+If you already cloned without `--recurse-submodules`:
+```bash
+git submodule update --init --recursive
+./scripts/setup.sh
+```
+
+The setup script will:
+1. Initialize all library submodules (BOSL2, NopSCADlib, PiHoles)
+2. Verify each library is present
+3. Run a test render to confirm everything works
 
 ## Shell Types
 
@@ -115,11 +121,13 @@ openscad -o output.stl examples/02-wedge-shell.scad
 ## Dependencies
 
 - **OpenSCAD 2021.x** or later
-- **BOSL2** - Included as git submodule
 
-Optional:
-- **NopSCADlib** - For PCB/component definitions
-- **PiHoles** - For Pi mounting patterns
+All libraries are included as git submodules in `lib/`:
+- **BOSL2** - Core geometry library (required)
+- **NopSCADlib** - PCB definitions, connectors, switches, batteries
+- **PiHoles** - Raspberry Pi mounting hole patterns
+- **knurled-openscad** - Knurled surface textures for knobs
+- **battery_lib** - Battery dimensions for compartment design
 
 ## License
 
