@@ -55,6 +55,17 @@ Standard patterns we use throughout RetroCase.
 - Subtracting attached shapes pattern
 - Creating new attachables pattern
 
+### [`boolean-operations.md`](boolean-operations.md)
+**Preventing Z-Fighting in Boolean Operations**
+
+Critical patterns for avoiding coincident surface artifacts when using `difference()` or `diff()/tag()`.
+
+**Key topics:**
+- The epsilon extension rule (0.01mm)
+- Cavity patterns for shells
+- Through-hole patterns
+- Verification techniques
+
 ### [`locations.md`](locations.md)
 **Code Location Index**
 

@@ -49,6 +49,12 @@ Every code change follows this cycle:
 - Make modules `attachable()` when they're reusable shapes
 - Follow naming conventions in [`../cross-domain/parameter-conventions.md`](../cross-domain/parameter-conventions.md)
 
+**Critical: Prevent Z-Fighting in Boolean Operations**
+- Always extend cutting shapes **0.01mm past** surfaces they cut through
+- Add `up(0.01)` and `+ 0.01` to height for cavities opening at top
+- Use `+ 1` (or at minimum `+ 0.02`) for through-holes
+- See [`../domains/bosl2-integration/boolean-operations.md`](../domains/bosl2-integration/boolean-operations.md) for detailed patterns
+
 **Avoid common mistakes:**
 - See [`../domains/bosl2-integration/common-mistakes.md`](../domains/bosl2-integration/common-mistakes.md)
 
@@ -142,6 +148,7 @@ When a render produces unexpected results:
 Before committing:
 - [ ] Ran render and verified output
 - [ ] No BOSL2 errors in console
+- [ ] No z-fighting (coincident surfaces) - all cuts extend 0.01mm past surfaces
 - [ ] Parameters follow naming conventions
 - [ ] Header comment documents all parameters
 - [ ] Example or test case exists

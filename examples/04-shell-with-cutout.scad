@@ -24,10 +24,10 @@ difference() {
     // Main shell body
     cuboid([width, height, depth], rounding=corner_radius, edges="Z", anchor=BOT);
 
-    // Hollow out the interior - position manually
-    translate([0, 0, depth - wall/2])
+    // Hollow out the interior (extends 0.01 past top to avoid z-fighting)
+    translate([0, 0, depth - wall/2 + 0.01])
     cuboid(
-        [inner_width, inner_height, depth],
+        [inner_width, inner_height, depth + 0.01],
         rounding = inner_corner,
         edges = "Z",
         anchor = TOP

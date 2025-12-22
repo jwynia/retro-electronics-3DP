@@ -14,14 +14,15 @@ IMGSIZE="800,600"
 COLORSCHEME="Tomorrow"
 
 # Camera preset lookup (returns: translateX,Y,Z,rotX,Y,Z,distance)
+# Distance of 450 ensures most objects fit in frame
 get_camera() {
     case "$1" in
-        front)  echo "0,0,0,90,0,0,300" ;;
-        top)    echo "0,0,0,0,0,0,300" ;;
-        iso)    echo "0,0,0,55,0,45,300" ;;
-        right)  echo "0,0,0,90,0,90,300" ;;
-        back)   echo "0,0,0,90,0,180,300" ;;
-        *)      echo "0,0,0,55,0,25,300" ;;  # default
+        front)  echo "0,0,0,90,0,0,450" ;;
+        top)    echo "0,0,0,0,0,0,450" ;;
+        iso)    echo "0,0,0,55,0,45,450" ;;
+        right)  echo "0,0,0,90,0,90,450" ;;
+        back)   echo "0,0,0,90,0,180,450" ;;
+        *)      echo "0,0,30,55,0,25,450" ;;  # default (slightly raised)
     esac
 }
 
