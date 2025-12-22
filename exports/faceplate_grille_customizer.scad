@@ -61,6 +61,10 @@ center_dia = 10; // [5:20]
 steel_pockets = true;
 // Pocket inset from corners (mm)
 steel_inset = 12; // [8:20]
+// Steel disc diameter (mm)
+steel_dia = 10; // [6:15]
+// Steel pocket depth (mm)
+steel_depth = 1; // [0.5:0.5:3]
 
 /* [Hidden] */
 $fn = 32;
@@ -85,7 +89,9 @@ faceplate_grille(
     ray_width = ray_width,
     center_dia = center_dia,
     steel_pockets = steel_pockets,
-    steel_inset = steel_inset
+    steel_inset = steel_inset,
+    steel_dia = steel_dia,
+    steel_depth = steel_depth
 );
 
 
