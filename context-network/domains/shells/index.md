@@ -41,10 +41,10 @@ Maps shell concepts to actual implementation files.
 
 ### Implemented
 - **Monolithic Shell** - Single-piece hollow enclosure with optional opening
+- **Wedge Shell** - Tapered enclosure with two taper styles (top/front)
 
 ### Planned
 - **Split Shell** - Two-piece design with seam
-- **Wedge Shell** - Tapered enclosure using prismoid
 
 ## Key Patterns
 

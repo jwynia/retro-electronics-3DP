@@ -56,11 +56,12 @@ module shell_monolithic(
         diff()
         cuboid(size, rounding=corner_r, anchor=CENTER) {
             
-            // Main cavity
+            // Main cavity (extends 0.01 past top to avoid z-fighting)
             tag("remove")
             position(TOP)
+            up(0.01)
             cuboid(
-                [inner_w, inner_h, depth - wall],
+                [inner_w, inner_h, depth - wall + 0.01],
                 rounding = inner_r,
                 anchor = TOP
             );

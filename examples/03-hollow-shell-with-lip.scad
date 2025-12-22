@@ -28,11 +28,12 @@ lip_corner = corner_radius - lip_inset;
 diff()
 cuboid([width, height, depth], rounding=corner_radius, anchor=BOT) {
     
-    // Main cavity - hollows out the shell
+    // Main cavity - hollows out the shell (extends 0.01 past top to avoid z-fighting)
     tag("remove")
     position(TOP)
+    up(0.01)
     cuboid(
-        [inner_width, inner_height, depth - wall],
+        [inner_width, inner_height, depth - wall + 0.01],
         rounding = inner_corner,
         anchor = TOP
     );

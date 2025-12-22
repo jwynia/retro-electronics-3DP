@@ -21,6 +21,19 @@ Index of where shell-related code lives in the RetroCase codebase.
   - Optional lip rebate (lines 69-77)
   - Optional front opening (lines 80-89)
 
+### shell_wedge()
+- **File:** `modules/shells/wedge.scad`
+- **Lines:** 32-81
+- **Purpose:** Tapered shell with configurable taper direction
+- **Key features:**
+  - Two taper styles: "top" (vertical taper) and "front" (raked face)
+  - Attachable module with full BOSL2 support
+  - Hollow interior with consistent wall thickness
+  - Optional opening and lip rebate
+- **Taper styles:**
+  - `taper_style="top"` - narrower at top, wider at bottom
+  - `taper_style="front"` - raked front face (Braun RT 20 style)
+
 ### Default Constants
 - **File:** `modules/shells/monolithic.scad`
 - **Lines:** 6-10
@@ -30,6 +43,17 @@ Index of where shell-related code lives in the RetroCase codebase.
   _SHELL_CORNER_RADIUS = 10
   _SHELL_LIP_DEPTH = 3
   _SHELL_LIP_INSET = 1.5
+  ```
+
+- **File:** `modules/shells/wedge.scad`
+- **Lines:** 7-12
+- **Values:**
+  ```openscad
+  _SHELL_WALL = 3
+  _SHELL_CORNER_RADIUS = 10
+  _SHELL_LIP_DEPTH = 3
+  _SHELL_LIP_INSET = 1.5
+  _SHELL_TAPER = 0.75
   ```
 
 ## Example Files
@@ -53,6 +77,14 @@ Index of where shell-related code lives in the RetroCase codebase.
 - **File:** `examples/04-shell-with-cutout.scad`
 - **Purpose:** Shell with front opening
 - **Demonstrates:** Opening cutout pattern
+
+### 08-wedge-shell-module.scad
+- **File:** `examples/08-wedge-shell-module.scad`
+- **Purpose:** Comprehensive wedge shell demonstrations
+- **Demonstrates:**
+  - shell_wedge() with both taper styles
+  - Various taper ratios
+  - With and without openings
 
 ## Key Implementation Details
 
