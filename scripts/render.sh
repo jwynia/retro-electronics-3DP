@@ -1,27 +1,29 @@
-#!/bin/bash
+#!/bin/sh
 # RetroCase render script
 # Renders OpenSCAD files to PNG for visual verification
+# Compatible with sh, bash, and zsh
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 OUTPUT_DIR="$PROJECT_ROOT/test-renders"
-LIB_PATH="$PROJECT_ROOT/lib"
-
-# Camera presets (x,y,z,rx,ry,rz,dist)
-declare -A CAMERAS
-CAMERAS[default]="0,0,0,55,0,25,300"
-CAMERAS[front]="0,0,0,90,0,0,300"
-CAMERAS[top]="0,0,0,0,0,0,300"
-CAMERAS[iso]="0,0,0,55,0,45,300"
-CAMERAS[right]="0,0,0,90,0,90,300"
-CAMERAS[back]="0,0,0,90,0,180,300"
 
 # Default settings
 IMGSIZE="800,600"
 COLORSCHEME="Tomorrow"
-CAMERA="${CAMERAS[default]}"
+
+# Camera preset lookup (returns: translateX,Y,Z,rotX,Y,Z,distance)
+get_camera() {
+    case "$1" in
+        front)  echo "0,0,0,90,0,0,300" ;;
+        top)    echo "0,0,0,0,0,0,300" ;;
+        iso)    echo "0,0,0,55,0,45,300" ;;
+        right)  echo "0,0,0,90,0,90,300" ;;
+        back)   echo "0,0,0,90,0,180,300" ;;
+        *)      echo "0,0,0,55,0,25,300" ;;  # default
+    esac
+}
 
 usage() {
     echo "Usage: $0 [options] <file.scad> [camera-preset]"
@@ -42,89 +44,85 @@ usage() {
 }
 
 render_file() {
-    local INPUT_FILE="$1"
-    local PRESET="${2:-default}"
-    local EXPORT_STL="${3:-false}"
-    
+    INPUT_FILE="$1"
+    PRESET="${2:-default}"
+    EXPORT_STL="${3:-false}"
+
     if [ ! -f "$INPUT_FILE" ]; then
         echo "Error: File not found: $INPUT_FILE"
         return 1
     fi
-    
+
     # Get camera for preset
-    local CAM="${CAMERAS[$PRESET]}"
-    if [ -z "$CAM" ]; then
-        echo "Warning: Unknown camera preset '$PRESET', using default"
-        CAM="${CAMERAS[default]}"
-    fi
-    
+    CAM=$(get_camera "$PRESET")
+
     # Generate output filename
-    local BASENAME=$(basename "$INPUT_FILE" .scad)
-    local PNG_OUTPUT="$OUTPUT_DIR/${BASENAME}.png"
-    local STL_OUTPUT="$OUTPUT_DIR/${BASENAME}.stl"
-    
+    BASENAME=$(basename "$INPUT_FILE" .scad)
+    PNG_OUTPUT="$OUTPUT_DIR/${BASENAME}.png"
+    STL_OUTPUT="$OUTPUT_DIR/${BASENAME}.stl"
+
     echo "Rendering: $INPUT_FILE"
     echo "  Camera: $PRESET"
     echo "  Output: $PNG_OUTPUT"
-    
+
     # Create output directory
     mkdir -p "$OUTPUT_DIR"
-    
+
     # Render PNG
     openscad -o "$PNG_OUTPUT" \
         --camera="$CAM" \
         --imgsize="$IMGSIZE" \
         --colorscheme="$COLORSCHEME" \
-        -D "\$fn=32" \
+        -D '$fn=32' \
         "$INPUT_FILE" 2>&1 | grep -v "^DEPRECATED" | head -30
-    
+
     if [ -f "$PNG_OUTPUT" ]; then
         echo "  ✓ PNG created"
     else
         echo "  ✗ PNG creation failed"
         return 1
     fi
-    
+
     # Export STL if requested
     if [ "$EXPORT_STL" = "true" ]; then
         echo "  Exporting STL..."
         openscad -o "$STL_OUTPUT" \
-            -D "\$fn=64" \
+            -D '$fn=64' \
             "$INPUT_FILE" 2>&1 | grep -v "^DEPRECATED" | head -10
-        
+
         if [ -f "$STL_OUTPUT" ]; then
             echo "  ✓ STL created: $STL_OUTPUT"
         else
             echo "  ✗ STL creation failed"
         fi
     fi
-    
+
     return 0
 }
 
 render_all() {
-    local EXPORT_STL="$1"
-    local COUNT=0
-    local FAILED=0
-    
+    EXPORT_STL_FLAG="$1"
+    COUNT=0
+    FAILED=0
+
     echo "=== Rendering all examples ==="
     echo ""
-    
+
     for FILE in "$PROJECT_ROOT"/examples/*.scad; do
         if [ -f "$FILE" ]; then
             echo "---"
-            if render_file "$FILE" "default" "$EXPORT_STL"; then
-                ((COUNT++))
+            if render_file "$FILE" "default" "$EXPORT_STL_FLAG"; then
+                COUNT=$((COUNT + 1))
             else
-                ((FAILED++))
+                FAILED=$((FAILED + 1))
             fi
             echo ""
         fi
     done
-    
+
     echo "=== Complete ==="
     echo "Rendered: $COUNT files"
-    if [ $FAILED -gt 0 ]; then
+    if [ "$FAILED" -gt 0 ]; then
         echo "Failed: $FAILED files"
     fi
 }
@@ -132,10 +130,11 @@ render_all() {
 # Parse arguments
 EXPORT_STL="false"
 RENDER_ALL="false"
-POSITIONAL=()
+FILES=""
+PRESET=""
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
+while [ $# -gt 0 ]; do
+    case "$1" in
         --all)
             RENDER_ALL="true"
             shift
@@ -158,33 +157,38 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
         *)
-            POSITIONAL+=("$1")
+            if [ -z "$FILES" ]; then
+                FILES="$1"
+            else
+                PRESET="$1"
+            fi
             shift
             ;;
     esac
 done
 
-# Restore positional parameters
-set -- "${POSITIONAL[@]}"
-
 # Execute
 if [ "$RENDER_ALL" = "true" ]; then
     render_all "$EXPORT_STL"
-elif [ $# -ge 1 ]; then
-    INPUT_FILE="$1"
-    PRESET="${2:-default}"
-    
+elif [ -n "$FILES" ]; then
+    INPUT_FILE="$FILES"
+    PRESET="${PRESET:-default}"
+
     # Handle relative paths
-    if [[ ! "$INPUT_FILE" = /* ]]; then
-        # Check if file exists relative to current dir
-        if [ -f "$INPUT_FILE" ]; then
-            INPUT_FILE="$(pwd)/$INPUT_FILE"
-        # Check if file exists relative to project root
-        elif [ -f "$PROJECT_ROOT/$INPUT_FILE" ]; then
-            INPUT_FILE="$PROJECT_ROOT/$INPUT_FILE"
-        fi
-    fi
-    
+    case "$INPUT_FILE" in
+        /*)
+            # Absolute path, use as-is
+            ;;
+        *)
+            # Relative path - check current dir first, then project root
+            if [ -f "$INPUT_FILE" ]; then
+                INPUT_FILE="$(pwd)/$INPUT_FILE"
+            elif [ -f "$PROJECT_ROOT/$INPUT_FILE" ]; then
+                INPUT_FILE="$PROJECT_ROOT/$INPUT_FILE"
+            fi
+            ;;
+    esac
+
     render_file "$INPUT_FILE" "$PRESET" "$EXPORT_STL"
 else
     usage

@@ -43,6 +43,7 @@ cuboid([width, height, depth], rounding=corner_radius, anchor=BOT) {
     cuboid(
         [lip_width, lip_height, lip_depth + 0.01],
         rounding = lip_corner,
+        edges = "Z",  // Only round vertical edges
         anchor = TOP
     );
 }
