@@ -11,6 +11,29 @@ Tracking significant updates to the RetroCase context network.
 
 ## Recent Updates
 
+### 2025-12-21: BOSL2 Lessons from Example Rendering
+
+**Scope:** BOSL2 integration documentation
+
+**Modified:**
+- `domains/bosl2-integration/common-mistakes.md` - Added two new common mistakes:
+  - Rounding radius larger than dimension (causes assertion errors)
+  - diff() preview artifacts with overlapping remove volumes
+- `domains/bosl2-integration/diff-tagging.md` - Added "Known Limitation" section about preview artifacts
+
+**Fixed:**
+- `examples/03-hollow-shell-with-lip.scad` - Added `edges="Z"` to fix rounding > dimension error
+- `examples/04-shell-with-cutout.scad` - Rewrote to use `difference()` instead of `diff()` to avoid preview artifacts
+
+**Key Lessons:**
+1. Always check `rounding <= smallest_affected_dimension`
+2. Use `edges="Z"` when rounding shapes that will have boolean ops on non-vertical faces
+3. Prefer `difference()` over `diff()` for complex boolean operations with overlapping removes
+
+**Status:** Complete
+
+---
+
 ### 2025-12-21: Initial Context Network Creation
 
 **Scope:** Complete network setup

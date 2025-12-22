@@ -205,6 +205,34 @@ cuboid(50) {
 }
 ```
 
+## Known Limitation: Preview Artifacts with Overlapping Removes
+
+**Important:** When multiple `tag("remove")` volumes overlap or share faces, OpenSCAD's preview rendering can produce severe z-fighting artifacts (flickering, scattered fragments).
+
+**Example that causes problems:**
+```openscad
+diff()
+shell_body() {
+    tag("remove") interior_cavity();   // Large internal void
+    tag("remove") front_opening();      // Cuts through front into cavity
+}
+// Preview may show glitchy rendering where opening meets cavity
+```
+
+**The STL output may still be correct**, but the preview is unreliable.
+
+**Solutions:**
+1. Use `difference()` instead of `diff()` for complex booleans
+2. Use F6 (full CGAL render) in OpenSCAD to verify geometry
+3. Export STL and check in another viewer
+
+**When to prefer `difference()` over `diff()`:**
+- Multiple overlapping remove volumes
+- Remove volumes that intersect with rounded surfaces
+- Complex shells with openings that cut into hollowed interiors
+
+See [`common-mistakes.md`](common-mistakes.md) for detailed examples.
+
 ## Navigation
 
 **Up:** [`index.md`](index.md) - BOSL2 Integration overview

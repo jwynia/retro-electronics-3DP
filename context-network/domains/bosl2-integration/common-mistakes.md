@@ -15,9 +15,10 @@ A catalog of common mistakes when using BOSL2 in RetroCase, with corrections and
 |-------|-------|-----|
 | `pos.x, pos.y` | `pos[0], pos[1]` | OpenSCAD has no dot notation |
 | `edges=["front"]` | `edges=FWD` or `edges="Y"` | Edge specs use constants or axis strings |
-| `difference() { ... }` | `diff() { tag("remove") ... }` | Use tag-based ops with attachables |
 | `translate([x,y,z]) child()` | `position(RIGHT) child()` | Use attachment system |
 | `rounding=5, edges=[...]` together | Check cuboid vs prismoid rules | prismoid only rounds vertical edges |
+| `rounding=10` on thin dimension | `rounding=min(r, dim)` or `edges="Z"` | Rounding radius > dimension causes errors |
+| `diff()` with overlapping removes | Use `difference()` for complex booleans | Overlapping remove volumes cause preview artifacts |
 
 ## Detailed Explanations
 
@@ -178,6 +179,86 @@ cuboid(50) {
 - `attach()` positions AND reorients the child
 - `position()` only positions, child keeps its orientation
 
+### 8. Rounding Radius Larger Than Dimension
+
+**Wrong:**
+```openscad
+// lip_depth = 3, but rounding = 8
+cuboid(
+    [100, 80, 3],  // Z dimension is only 3
+    rounding = 8,  // ERROR: Can't round 8mm on 3mm dimension
+    anchor = TOP
+);
+```
+
+**Right:**
+```openscad
+// Option 1: Limit rounding to smallest dimension
+cuboid(
+    [100, 80, 3],
+    rounding = min(8, 3),  // Clamps to 3
+    anchor = TOP
+);
+
+// Option 2: Only round edges that can accommodate the radius
+cuboid(
+    [100, 80, 3],
+    rounding = 8,
+    edges = "Z",  // Only round vertical edges (not affected by Z dimension)
+    anchor = TOP
+);
+```
+
+**Why:** OpenSCAD cannot create a rounding larger than the dimension being rounded. This causes assertion errors or geometry failures. Always check that `rounding <= smallest_affected_dimension`.
+
+**Symptoms:**
+- Error: "Rounding or chamfering too large for cuboid size"
+- Geometry fails silently, producing unexpected shapes
+- STL export failures
+
+### 9. diff() Preview Artifacts with Overlapping Remove Volumes
+
+**Problem:**
+```openscad
+diff()
+cuboid([180, 120, 60], rounding=12, anchor=BOT) {
+    // Interior cavity
+    tag("remove")
+    position(TOP)
+    cuboid([174, 114, 57], rounding=9, anchor=TOP);
+
+    // Front opening (overlaps with cavity at intersection)
+    tag("remove")
+    position(FWD)
+    cuboid([140, 10, 80], anchor=FWD);
+}
+// Preview shows severe z-fighting/flickering at intersections!
+```
+
+**Solution:**
+```openscad
+// Use traditional difference() for complex boolean operations
+difference() {
+    cuboid([180, 120, 60], rounding=12, edges="Z", anchor=BOT);
+
+    // Interior cavity
+    translate([0, 0, 57])
+    cuboid([174, 114, 60], rounding=9, edges="Z", anchor=TOP);
+
+    // Front opening
+    translate([0, -60, 30])
+    cuboid([140, 10, 80], anchor=CENTER);
+}
+```
+
+**Why:** BOSL2's `diff()` with `tag("remove")` uses preview coloring that can produce severe visual artifacts when multiple remove volumes overlap or share faces. The actual STL geometry may be correct, but preview rendering breaks.
+
+**When to use each:**
+- `diff()` with tags: Simple hollowing, single remove volume, or non-overlapping removes
+- `difference()`: Multiple overlapping remove volumes, complex boolean intersections
+
+**Tip:** If you see z-fighting in preview but need to verify geometry, export to STL and check in another tool, or use F6 (full CGAL render) in OpenSCAD.
+
 ## Navigation
 
 **Up:** [`index.md`](index.md) - BOSL2 Integration overview
@@ -185,6 +266,7 @@ cuboid(50) {
 **Related:**
 - [`idioms.md`](idioms.md) - Correct patterns to use
 - [`attachment-system.md`](attachment-system.md) - How attachments work
+- [`diff-tagging.md`](diff-tagging.md) - Tag-based operations
 - [`../../docs/bosl2/attachments.md`](../../docs/bosl2/attachments.md) - BOSL2 docs
 
 ## Metadata
