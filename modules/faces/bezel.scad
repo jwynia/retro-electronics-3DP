@@ -883,19 +883,232 @@ module _multi_crt_carve_round(pos, inner_dia, outer_w, outer_h, outer_r, thickne
     }
 }
 
+/**
+ * Creates a face plate designed to hold a lens or cover.
+ * For LED domes, display covers, jewel lenses, diffusers.
+ *
+ * Arguments:
+ *   size           - [width, height] outer dimensions
+ *   thickness      - plate thickness (default: 4)
+ *   corner_r       - outer corner radius (default: 8)
+ *   lens_size      - diameter (round) or [width, height] (rect)
+ *   lens_shape     - "round" or "rect" (default: "round")
+ *   lens_thickness - thickness of the lens material (default: 2)
+ *   lens_recess    - how far below surface lens sits, 0=flush (default: 0)
+ *   lip            - how much bezel overlaps lens edge (default: 1.5)
+ *   viewing_hole   - diameter/size of hole through bezel, 0=no hole (default: 0)
+ *   retention      - "none", "friction", "clips" (default: "none")
+ *   clip_count     - number of clips for "clips" retention (2 or 4, default: 4)
+ *   style          - "plain", "raised_ring", "chamfer" (default: "plain")
+ *   style_options  - style-specific: raised_ring=[height, width], chamfer=[angle]
+ *   steel_pockets  - include steel pockets (default: true)
+ *   steel_inset    - distance from corner to pocket center (default: 12)
+ *
+ * Lens sits in a recessed pocket, held by the lip overlap.
+ * The viewing_hole parameter allows light through without removing the full lens area.
+ */
+module faceplate_lens(
+    size,
+    thickness = _FACEPLATE_THICKNESS,
+    corner_r = _FACEPLATE_CORNER_R,
+    lens_size,
+    lens_shape = "round",
+    lens_thickness = 2,
+    lens_recess = 0,
+    lip = 1.5,
+    viewing_hole = 0,
+    retention = "none",
+    clip_count = 4,
+    style = "plain",
+    style_options = [],
+    steel_pockets = true,
+    steel_inset = 12,
+    steel_dia = 10,
+    steel_depth = 1,
+    anchor = BOT,
+    spin = 0,
+    orient = UP
+) {
+    width = size[0];
+    height = size[1];
+
+    // Calculate lens dimensions
+    is_round = lens_shape == "round";
+    lens_dia = is_round ? lens_size : 0;
+    lens_w = is_round ? lens_size : lens_size[0];
+    lens_h = is_round ? lens_size : lens_size[1];
+    lens_r = is_round ? lens_dia/2 : (len(lens_size) > 2 ? lens_size[2] : 2);
+
+    // Pocket for lens (slightly larger for fit)
+    pocket_clearance = retention == "friction" ? 0 : 0.3;
+    pocket_dia = lens_dia + pocket_clearance;
+    pocket_w = lens_w + pocket_clearance;
+    pocket_h = lens_h + pocket_clearance;
+
+    // Opening through bezel (lens minus lip)
+    opening_dia = lens_dia - lip * 2;
+    opening_w = lens_w - lip * 2;
+    opening_h = lens_h - lip * 2;
+
+    // Viewing hole (if specified, otherwise use opening)
+    view_dia = viewing_hole > 0 ? viewing_hole : opening_dia;
+    view_w = viewing_hole > 0 ? viewing_hole : opening_w;
+    view_h = viewing_hole > 0 ? viewing_hole : opening_h;
+
+    // Style params
+    ring_height = len(style_options) > 0 ? style_options[0] : 1.5;
+    ring_width = len(style_options) > 1 ? style_options[1] : 3;
+    chamfer_angle = len(style_options) > 0 ? style_options[0] : 45;
+
+    // Total height includes any raised elements
+    raised_height = style == "raised_ring" ? ring_height : 0;
+    total_height = thickness + raised_height;
+
+    // Steel pocket positions
+    pocket_positions = [
+        [ width/2 - steel_inset,  height/2 - steel_inset],
+        [-width/2 + steel_inset,  height/2 - steel_inset],
+        [-width/2 + steel_inset, -height/2 + steel_inset],
+        [ width/2 - steel_inset, -height/2 + steel_inset]
+    ];
+
+    // Clip dimensions
+    clip_width = 3;
+    clip_depth = 1.2;
+    clip_height = lens_thickness + 0.5;
+
+    attachable(anchor, spin, orient, size=[width, height, total_height]) {
+        union() {
+            difference() {
+                union() {
+                    // Base plate
+                    cuboid([width, height, thickness], rounding=corner_r, edges="Z", anchor=CENTER);
+
+                    // Style: raised ring around opening
+                    if (style == "raised_ring") {
+                        translate([0, 0, thickness/2])
+                        if (is_round) {
+                            difference() {
+                                cyl(d=opening_dia + ring_width * 2, h=ring_height, anchor=BOT, $fn=64);
+                                translate([0, 0, -0.1])
+                                cyl(d=opening_dia, h=ring_height + 1, anchor=BOT, $fn=64);
+                            }
+                        } else {
+                            difference() {
+                                cuboid([opening_w + ring_width * 2, opening_h + ring_width * 2, ring_height],
+                                       rounding=lens_r + ring_width/2, edges="Z", anchor=BOT);
+                                translate([0, 0, -0.1])
+                                cuboid([opening_w, opening_h, ring_height + 1],
+                                       rounding=max(0.5, lens_r - lip), edges="Z", anchor=BOT);
+                            }
+                        }
+                    }
+
+                    // Style: chamfer ring
+                    if (style == "chamfer") {
+                        translate([0, 0, thickness/2])
+                        if (is_round) {
+                            difference() {
+                                cyl(d=opening_dia + 6, h=3, anchor=BOT, chamfer2=2, $fn=64);
+                                translate([0, 0, -0.1])
+                                cyl(d=opening_dia, h=4, anchor=BOT, $fn=64);
+                            }
+                        } else {
+                            difference() {
+                                cuboid([opening_w + 6, opening_h + 6, 3],
+                                       chamfer=2, edges=TOP, anchor=BOT);
+                                translate([0, 0, -0.1])
+                                cuboid([opening_w, opening_h, 4],
+                                       rounding=max(0.5, lens_r - lip), edges="Z", anchor=BOT);
+                            }
+                        }
+                    }
+                }
+
+                // Lens pocket (from back, for lens to sit in)
+                translate([0, 0, -thickness/2])
+                if (is_round) {
+                    cyl(d=pocket_dia, h=lens_thickness + lens_recess + 0.1, anchor=BOT, $fn=64);
+                } else {
+                    cuboid([pocket_w, pocket_h, lens_thickness + lens_recess + 0.1],
+                           rounding=lens_r + 0.2, edges="Z", anchor=BOT);
+                }
+
+                // Viewing opening (through the bezel above the lens)
+                translate([0, 0, -thickness/2 + lens_thickness + lens_recess - 0.1])
+                if (is_round) {
+                    cyl(d=view_dia, h=total_height, anchor=BOT, $fn=64);
+                } else {
+                    linear_extrude(total_height)
+                    offset(r=max(0.5, lens_r - lip)) offset(r=-max(0.5, lens_r - lip))
+                    square([view_w, view_h], center=true);
+                }
+
+                // Steel disc pockets
+                if (steel_pockets) {
+                    for (pos = pocket_positions) {
+                        translate([pos[0], pos[1], -thickness/2])
+                        cyl(d=steel_dia + 0.3, h=steel_depth + 0.1, anchor=BOT, $fn=32);
+                    }
+                }
+            }
+
+            // Retention clips (inside the lens pocket)
+            if (retention == "clips") {
+                clip_positions = clip_count == 2 ?
+                    [[0, 1], [0, -1]] :  // Top and bottom
+                    [[1, 0], [-1, 0], [0, 1], [0, -1]];  // All 4 sides
+
+                for (cp = clip_positions) {
+                    if (is_round) {
+                        clip_r = pocket_dia/2 - 0.5;
+                        angle = atan2(cp[1], cp[0]);
+                        translate([clip_r * cos(angle), clip_r * sin(angle), -thickness/2])
+                        rotate([0, 0, angle])
+                        _lens_clip(clip_width, clip_depth, clip_height);
+                    } else {
+                        // Position clips on edges
+                        px = cp[0] * (pocket_w/2 - 0.5);
+                        py = cp[1] * (pocket_h/2 - 0.5);
+                        rot = cp[0] != 0 ? 90 : 0;
+                        translate([px, py, -thickness/2])
+                        rotate([0, 0, rot])
+                        _lens_clip(clip_width, clip_depth, clip_height);
+                    }
+                }
+            }
+        }
+
+        children();
+    }
+}
+
+// Internal: retention clip for lens holder
+module _lens_clip(width, depth, height) {
+    // Small angled tab that lens snaps under
+    hull() {
+        // Base
+        translate([0, 0, 0])
+        cube([width, 0.5, height], center=true);
+
+        // Overhang tip
+        translate([0, -depth, height/2 - 0.3])
+        cube([width - 0.5, 0.3, 0.6], center=true);
+    }
+}
+
 // === TEST / DEMO ===
 if ($preview) {
-    // Demo: Multi-opening faceplate with screen and LEDs
-    faceplate_multi(
-        size = [180, 100],
-        openings = [
-            ["screen", [-20, 0], [100, 60], 3],
-            ["led", [60, 25], 5],
-            ["led", [60, 0], 5],
-            ["led", [60, -25], 5]
-        ],
-        style = "crt",
-        style_options = [8]
+    // Demo: Round lens holder with clips
+    faceplate_lens(
+        size = [60, 60],
+        lens_size = 30,
+        lens_shape = "round",
+        lens_thickness = 3,
+        lip = 2,
+        retention = "clips",
+        style = "raised_ring",
+        style_options = [2, 4]
     );
 }
 
