@@ -284,13 +284,16 @@ module faceplate_bezel(
                 // Like a classic tube TV bezel - smooth dish-like curve to screen
 
                 // Number of steps for smooth curve
-                crt_steps = 16;
+                crt_steps = 24;
 
                 // Dimensions for interpolation
                 outer_w = width - 2;
                 outer_h = height - 2;
-                inner_w = view_w + 6;
-                inner_h = view_h + 6;
+                // Inner dimensions match screen opening for clean transition
+                inner_w = view_w + 2;
+                inner_h = view_h + 2;
+                // Inner corner radius matches screen for seamless edge
+                crt_inner_r = screen_corner_r + 1;
 
                 difference() {
                     union() {
