@@ -60,7 +60,7 @@ center_dia = 10; // [5:20]
 // Include steel disc pockets for magnetic mounting
 steel_pockets = true;
 // Pocket inset from corners (mm)
-steel_inset = 12; // [8:20]
+steel_inset = 12; // [5:25]
 // Steel disc diameter (mm)
 steel_dia = 10; // [6:15]
 // Steel pocket depth (mm)
