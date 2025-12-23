@@ -488,18 +488,414 @@ module faceplate_blank(
     }
 }
 
+/**
+ * Creates a face plate with round meter/gauge opening.
+ * For analog meters, VU meters, gauges, circular displays.
+ *
+ * Arguments:
+ *   size           - [width, height] outer dimensions (can be square)
+ *   thickness      - plate thickness (default: 4)
+ *   corner_r       - outer corner radius (default: 8)
+ *   meter_dia      - diameter of meter opening
+ *   meter_depth    - depth of meter mounting pocket on back (default: 5)
+ *   meter_lip      - lip width holding meter in place (default: 2)
+ *   style          - "plain", "crt", "industrial", "deco"
+ *   style_options  - style-specific parameters
+ *                    crt: [slope_height] default: [8]
+ *   steel_pockets  - include steel pockets (default: true)
+ *   steel_inset    - distance from corner to pocket center (default: 12)
+ */
+module faceplate_meter(
+    size,
+    thickness = _FACEPLATE_THICKNESS,
+    corner_r = _FACEPLATE_CORNER_R,
+    meter_dia,
+    meter_depth = 5,
+    meter_lip = 2,
+    style = "plain",
+    style_options = [],
+    steel_pockets = true,
+    steel_inset = 12,
+    steel_dia = 10,
+    steel_depth = 1,
+    anchor = BOT,
+    spin = 0,
+    orient = UP
+) {
+    width = size[0];
+    height = size[1];
+
+    // Derived dimensions
+    view_dia = meter_dia - (meter_lip * 2);  // Visible opening
+    mount_dia = meter_dia + 1;  // Slightly larger for mounting
+
+    // CRT style params
+    crt_slope_height = len(style_options) > 0 ? style_options[0] : 8;
+    crt_steps = 24;
+
+    // Total height
+    total_height = style == "crt" ? thickness + crt_slope_height : thickness;
+
+    // Steel pocket positions
+    pocket_positions = [
+        [ width/2 - steel_inset,  height/2 - steel_inset],
+        [-width/2 + steel_inset,  height/2 - steel_inset],
+        [-width/2 + steel_inset, -height/2 + steel_inset],
+        [ width/2 - steel_inset, -height/2 + steel_inset]
+    ];
+
+    attachable(anchor, spin, orient, size=[width, height, total_height]) {
+        if (style == "crt") {
+            // CRT style: curved concave dish to round opening
+            difference() {
+                // Full solid block
+                translate([0, 0, -thickness/2])
+                linear_extrude(thickness + crt_slope_height)
+                offset(r=corner_r) offset(r=-corner_r)
+                square([width - 2, height - 2], center=true);
+
+                // Carve curved dish surface
+                for (i = [0:crt_steps-1]) {
+                    t1 = i / crt_steps;
+                    t2 = (i + 1) / crt_steps;
+
+                    // Carve depth follows cosine curve
+                    carve1 = (1 - cos(t1 * 90)) * crt_slope_height;
+                    carve2 = (1 - cos(t2 * 90)) * crt_slope_height;
+
+                    // Interpolate from outer rectangle to inner circle
+                    // Outer shape is rounded rect, inner is circle
+                    hull() {
+                        // Outer slice - rounded rectangle
+                        if (t1 < 0.5) {
+                            w1 = (width - 2) - t1 * 2 * ((width - 2) - view_dia - 4);
+                            h1 = (height - 2) - t1 * 2 * ((height - 2) - view_dia - 4);
+                            r1 = corner_r - t1 * 2 * (corner_r - view_dia/2);
+                            translate([0, 0, thickness/2 + crt_slope_height - carve1])
+                            linear_extrude(carve1 + 1)
+                            offset(r=max(1,r1)) offset(r=-max(1,r1))
+                            square([max(view_dia, w1), max(view_dia, h1)], center=true);
+                        } else {
+                            // Inner slices are circles
+                            dia1 = view_dia + 4 - (t1 - 0.5) * 2 * 4;
+                            translate([0, 0, thickness/2 + crt_slope_height - carve1])
+                            linear_extrude(carve1 + 1)
+                            circle(d=max(view_dia, dia1), $fn=64);
+                        }
+
+                        // Next slice
+                        if (t2 < 0.5) {
+                            w2 = (width - 2) - t2 * 2 * ((width - 2) - view_dia - 4);
+                            h2 = (height - 2) - t2 * 2 * ((height - 2) - view_dia - 4);
+                            r2 = corner_r - t2 * 2 * (corner_r - view_dia/2);
+                            translate([0, 0, thickness/2 + crt_slope_height - carve2])
+                            linear_extrude(carve2 + 1)
+                            offset(r=max(1,r2)) offset(r=-max(1,r2))
+                            square([max(view_dia, w2), max(view_dia, h2)], center=true);
+                        } else {
+                            dia2 = view_dia + 4 - (t2 - 0.5) * 2 * 4;
+                            translate([0, 0, thickness/2 + crt_slope_height - carve2])
+                            linear_extrude(carve2 + 1)
+                            circle(d=max(view_dia, dia2), $fn=64);
+                        }
+                    }
+                }
+
+                // Meter viewing opening (through)
+                translate([0, 0, -thickness/2 - 1])
+                cylinder(d=view_dia, h=thickness + crt_slope_height + 3, $fn=64);
+
+                // Meter mounting pocket (back)
+                translate([0, 0, -thickness/2 - meter_depth])
+                cylinder(d=mount_dia, h=meter_depth + 1, $fn=64);
+
+                // Steel disc pockets
+                if (steel_pockets) {
+                    for (pos = pocket_positions) {
+                        translate([pos[0], pos[1], -thickness/2])
+                        cyl(d=steel_dia + 0.3, h=steel_depth + 0.1, anchor=TOP, $fn=32);
+                    }
+                }
+            }
+        } else {
+            // Plain style: flat plate with round opening
+            diff()
+            cuboid([width, height, thickness], rounding=corner_r, edges="Z", anchor=CENTER) {
+
+                // Meter viewing opening
+                tag("remove")
+                position(TOP)
+                cyl(d=view_dia, h=thickness + 1, anchor=TOP, $fn=64);
+
+                // Meter mounting pocket
+                tag("remove")
+                position(BOT)
+                cyl(d=mount_dia, h=meter_depth, anchor=BOT, $fn=64);
+
+                // Steel disc pockets
+                if (steel_pockets) {
+                    tag("remove")
+                    position(BOT)
+                    for (pos = pocket_positions) {
+                        translate([pos[0], pos[1], 0])
+                        cyl(d=steel_dia + 0.3, h=steel_depth + 0.1, anchor=BOT, $fn=32);
+                    }
+                }
+            }
+        }
+
+        children();
+    }
+}
+
+/**
+ * Creates a face plate with multiple openings.
+ * Flexible module for combining screens, meters, LEDs, slots on one faceplate.
+ *
+ * Arguments:
+ *   size           - [width, height] outer dimensions
+ *   thickness      - plate thickness (default: 4)
+ *   corner_r       - outer corner radius (default: 8)
+ *   openings       - array of opening definitions, each is:
+ *                    ["screen", [x,y], [w,h], corner_r]
+ *                    ["meter", [x,y], diameter]
+ *                    ["led", [x,y], diameter]  (small round, default 5mm)
+ *                    ["slot", [x,y], [w,h], corner_r]
+ *   style          - "plain" or "crt" (CRT only affects screen/meter openings)
+ *   style_options  - [slope_height] for CRT style
+ *   steel_pockets  - include steel pockets (default: true)
+ *   steel_inset    - distance from corner to pocket center (default: 12)
+ *
+ * Example:
+ *   faceplate_multi(
+ *       size = [200, 100],
+ *       openings = [
+ *           ["screen", [0, 0], [120, 60], 3],
+ *           ["led", [80, 30], 5],
+ *           ["led", [80, -30], 5]
+ *       ]
+ *   );
+ */
+module faceplate_multi(
+    size,
+    thickness = _FACEPLATE_THICKNESS,
+    corner_r = _FACEPLATE_CORNER_R,
+    openings = [],
+    style = "plain",
+    style_options = [],
+    steel_pockets = true,
+    steel_inset = 12,
+    steel_dia = 10,
+    steel_depth = 1,
+    anchor = BOT,
+    spin = 0,
+    orient = UP
+) {
+    width = size[0];
+    height = size[1];
+
+    // CRT params
+    crt_slope_height = len(style_options) > 0 ? style_options[0] : 8;
+    crt_steps = 20;
+
+    total_height = style == "crt" ? thickness + crt_slope_height : thickness;
+
+    // Steel pocket positions
+    pocket_positions = [
+        [ width/2 - steel_inset,  height/2 - steel_inset],
+        [-width/2 + steel_inset,  height/2 - steel_inset],
+        [-width/2 + steel_inset, -height/2 + steel_inset],
+        [ width/2 - steel_inset, -height/2 + steel_inset]
+    ];
+
+    attachable(anchor, spin, orient, size=[width, height, total_height]) {
+        difference() {
+            // Base plate
+            if (style == "crt") {
+                // Raised block for CRT carving
+                translate([0, 0, -thickness/2])
+                linear_extrude(thickness + crt_slope_height)
+                offset(r=corner_r) offset(r=-corner_r)
+                square([width - 2, height - 2], center=true);
+            } else {
+                // Plain flat plate
+                cuboid([width, height, thickness], rounding=corner_r, edges="Z", anchor=CENTER);
+            }
+
+            // Process each opening
+            for (op = openings) {
+                op_type = op[0];
+                op_pos = op[1];
+                op_size = op[2];
+                op_r = len(op) > 3 ? op[3] : 3;
+
+                if (op_type == "screen") {
+                    // Rectangular screen opening
+                    op_w = op_size[0];
+                    op_h = op_size[1];
+
+                    if (style == "crt") {
+                        // Carve CRT dish for this opening
+                        _multi_crt_carve_rect(
+                            pos = op_pos,
+                            inner_w = op_w,
+                            inner_h = op_h,
+                            inner_r = op_r,
+                            outer_w = width - 2,
+                            outer_h = height - 2,
+                            outer_r = corner_r,
+                            thickness = thickness,
+                            slope_height = crt_slope_height,
+                            steps = crt_steps
+                        );
+                    }
+
+                    // Through hole
+                    translate([op_pos[0], op_pos[1], -thickness/2 - 1])
+                    linear_extrude(total_height + 3)
+                    offset(r=op_r) offset(r=-op_r)
+                    square([op_w, op_h], center=true);
+
+                } else if (op_type == "meter") {
+                    // Round meter opening
+                    op_dia = op_size;
+
+                    if (style == "crt") {
+                        // Carve CRT dish for round opening
+                        _multi_crt_carve_round(
+                            pos = op_pos,
+                            inner_dia = op_dia,
+                            outer_w = width - 2,
+                            outer_h = height - 2,
+                            outer_r = corner_r,
+                            thickness = thickness,
+                            slope_height = crt_slope_height,
+                            steps = crt_steps
+                        );
+                    }
+
+                    // Through hole
+                    translate([op_pos[0], op_pos[1], -thickness/2 - 1])
+                    cylinder(d=op_dia, h=total_height + 3, $fn=64);
+
+                } else if (op_type == "led") {
+                    // Small LED indicator hole
+                    op_dia = is_num(op_size) ? op_size : 5;
+
+                    translate([op_pos[0], op_pos[1], -thickness/2 - 1])
+                    cylinder(d=op_dia, h=total_height + 3, $fn=32);
+
+                } else if (op_type == "slot") {
+                    // Rectangular slot (like for switches, vents)
+                    op_w = op_size[0];
+                    op_h = op_size[1];
+
+                    translate([op_pos[0], op_pos[1], -thickness/2 - 1])
+                    linear_extrude(total_height + 3)
+                    offset(r=op_r) offset(r=-op_r)
+                    square([op_w, op_h], center=true);
+                }
+            }
+
+            // Steel disc pockets
+            if (steel_pockets) {
+                for (pos = pocket_positions) {
+                    translate([pos[0], pos[1], -thickness/2])
+                    cyl(d=steel_dia + 0.3, h=steel_depth + 0.1, anchor=TOP, $fn=32);
+                }
+            }
+        }
+
+        children();
+    }
+}
+
+// Internal: Carve CRT dish for rectangular opening
+module _multi_crt_carve_rect(pos, inner_w, inner_h, inner_r, outer_w, outer_h, outer_r, thickness, slope_height, steps) {
+    for (i = [0:steps-1]) {
+        t1 = i / steps;
+        t2 = (i + 1) / steps;
+
+        carve1 = (1 - cos(t1 * 90)) * slope_height;
+        carve2 = (1 - cos(t2 * 90)) * slope_height;
+
+        // Interpolate from outer to inner
+        w1 = outer_w - t1 * (outer_w - inner_w - 4);
+        w2 = outer_w - t2 * (outer_w - inner_w - 4);
+        h1 = outer_h - t1 * (outer_h - inner_h - 4);
+        h2 = outer_h - t2 * (outer_h - inner_h - 4);
+        r1 = outer_r - t1 * (outer_r - inner_r);
+        r2 = outer_r - t2 * (outer_r - inner_r);
+
+        // Position interpolation toward opening
+        px1 = pos[0] * t1;
+        py1 = pos[1] * t1;
+        px2 = pos[0] * t2;
+        py2 = pos[1] * t2;
+
+        hull() {
+            translate([px1, py1, thickness/2 + slope_height - carve1])
+            linear_extrude(carve1 + 1)
+            offset(r=max(1, r1)) offset(r=-max(1, r1))
+            square([w1, h1], center=true);
+
+            translate([px2, py2, thickness/2 + slope_height - carve2])
+            linear_extrude(carve2 + 1)
+            offset(r=max(1, r2)) offset(r=-max(1, r2))
+            square([w2, h2], center=true);
+        }
+    }
+}
+
+// Internal: Carve CRT dish for round opening
+module _multi_crt_carve_round(pos, inner_dia, outer_w, outer_h, outer_r, thickness, slope_height, steps) {
+    for (i = [0:steps-1]) {
+        t1 = i / steps;
+        t2 = (i + 1) / steps;
+
+        carve1 = (1 - cos(t1 * 90)) * slope_height;
+        carve2 = (1 - cos(t2 * 90)) * slope_height;
+
+        // Interpolate size
+        w1 = outer_w - t1 * (outer_w - inner_dia - 4);
+        w2 = outer_w - t2 * (outer_w - inner_dia - 4);
+        h1 = outer_h - t1 * (outer_h - inner_dia - 4);
+        h2 = outer_h - t2 * (outer_h - inner_dia - 4);
+        r1 = outer_r - t1 * (outer_r - inner_dia/2);
+        r2 = outer_r - t2 * (outer_r - inner_dia/2);
+
+        px1 = pos[0] * t1;
+        py1 = pos[1] * t1;
+        px2 = pos[0] * t2;
+        py2 = pos[1] * t2;
+
+        hull() {
+            translate([px1, py1, thickness/2 + slope_height - carve1])
+            linear_extrude(carve1 + 1)
+            offset(r=max(1, r1)) offset(r=-max(1, r1))
+            square([w1, h1], center=true);
+
+            translate([px2, py2, thickness/2 + slope_height - carve2])
+            linear_extrude(carve2 + 1)
+            offset(r=max(1, r2)) offset(r=-max(1, r2))
+            square([w2, h2], center=true);
+        }
+    }
+}
+
 // === TEST / DEMO ===
 if ($preview) {
-    // Demo: Screen bezel face plate with CRT style
-    faceplate_bezel(
-        size = [140, 95],
-        thickness = 4,
-        corner_r = 10,
-        screen_size = [100, 60],
-        screen_corner_r = 3,
-        screen_depth = 8,
-        style = "crt"
-        // style_options = [slope_width, slope_angle, slope_height, scoop_radius]
-        // style_options = [15, 45, 8, 20]  // more dramatic slope
+    // Demo: Multi-opening faceplate with screen and LEDs
+    faceplate_multi(
+        size = [180, 100],
+        openings = [
+            ["screen", [-20, 0], [100, 60], 3],
+            ["led", [60, 25], 5],
+            ["led", [60, 0], 5],
+            ["led", [60, -25], 5]
+        ],
+        style = "crt",
+        style_options = [8]
     );
 }
+
