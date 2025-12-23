@@ -94,7 +94,7 @@ corner_r = 8; // [0:20]
 
 /* [Grille Pattern] */
 // Pattern style
-pattern = "perf"; // [perf:Circular Holes, slots:Horizontal Slots, vslots:Vertical Slots, hex:Honeycomb, circles:Concentric Circles, diamond:Diamond Grid, sunburst:Sunburst]
+pattern = "perf"; // [none:No Pattern (solid), perf:Circular Holes, slots:Horizontal Slots, vslots:Vertical Slots, hex:Honeycomb, circles:Concentric Circles, diamond:Diamond Grid, sunburst:Sunburst]
 // Margin from edges (mm)
 grille_margin = 10; // [5:20]
 
@@ -133,7 +133,11 @@ ray_width = 3; // [1:0.5:6]
 center_dia = 10; // [5:20]
 
 /* [Mounting] */
-// Include steel disc pockets for magnetic mounting
+// Mounting type
+mounting = "magnetic"; // [magnetic:Magnetic (steel disc pockets), screw:Screw Holes]
+
+/* [Magnetic Mounting] */
+// Include steel disc pockets
 steel_pockets = true;
 // Pocket inset from corners (mm)
 steel_inset = 12; // [5:25]
@@ -141,6 +145,18 @@ steel_inset = 12; // [5:25]
 steel_dia = 10; // [6:15]
 // Steel pocket depth (mm)
 steel_depth = 1; // [0.5:0.5:3]
+
+/* [Screw Mounting] */
+// Screw hole inset from corners (mm)
+screw_inset = 10; // [5:25]
+// Screw hole diameter (mm) - 3.2 for M3
+screw_dia = 3.2; // [2.5:0.1:5]
+// Include countersink
+countersink = true;
+// Countersink diameter (mm)
+cs_dia = 6; // [4:10]
+// Countersink depth (mm)
+cs_depth = 1.5; // [0.5:0.5:3]
 
 /* [Hidden] */
 $fn = 32;
@@ -164,10 +180,16 @@ faceplate_grille(
     ray_count = ray_count,
     ray_width = ray_width,
     center_dia = center_dia,
+    mounting = mounting,
     steel_pockets = steel_pockets,
     steel_inset = steel_inset,
     steel_dia = steel_dia,
-    steel_depth = steel_depth
+    steel_depth = steel_depth,
+    screw_inset = screw_inset,
+    screw_dia = screw_dia,
+    countersink = countersink,
+    cs_dia = cs_dia,
+    cs_depth = cs_depth
 );
 `,
 

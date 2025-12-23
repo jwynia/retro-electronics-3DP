@@ -156,7 +156,7 @@ module _grille_sunburst(w, h, t, ray_count=12, ray_width=3, center_dia=10) {
 // ============================================================
 
 /**
- * Creates a face plate with grille pattern.
+ * Creates a face plate with optional grille pattern.
  *
  * Arguments:
  *   size          - [width, height] outer dimensions
@@ -164,8 +164,8 @@ module _grille_sunburst(w, h, t, ray_count=12, ray_width=3, center_dia=10) {
  *   corner_r      - corner radius (default: 8)
  *   grille_size   - [width, height] of grille area, or undef for auto
  *   grille_margin - margin from edges if grille_size not specified (default: 10)
- *   pattern       - pattern type: "perf", "slots", "vslots", "hex",
- *                   "circles", "diamond", "sunburst"
+ *   pattern       - pattern type: "none", "perf", "slots", "vslots", "hex",
+ *                   "circles", "diamond", "sunburst" (default: "perf")
  *
  * Pattern-specific parameters (with defaults):
  *   hole_dia      - hole diameter for perf/diamond (default: 4)
@@ -181,11 +181,21 @@ module _grille_sunburst(w, h, t, ray_count=12, ray_width=3, center_dia=10) {
  *   ray_width     - sunburst ray width (default: 3)
  *   center_dia    - sunburst center hole diameter (default: 10)
  *
- * Standard faceplate options:
+ * Mounting options:
+ *   mounting      - "magnetic" or "screw" (default: "magnetic")
+ *
+ * Magnetic mounting (when mounting="magnetic"):
  *   steel_pockets - include steel disc pockets (default: true)
  *   steel_inset   - pocket distance from corners (default: 12)
  *   steel_dia     - steel disc diameter (default: 10)
  *   steel_depth   - pocket depth (default: 1)
+ *
+ * Screw mounting (when mounting="screw"):
+ *   screw_inset   - screw hole distance from corners (default: 10)
+ *   screw_dia     - screw hole diameter (default: 3.2 for M3)
+ *   countersink   - include countersink (default: true)
+ *   cs_dia        - countersink diameter (default: 6)
+ *   cs_depth      - countersink depth (default: 1.5)
  */
 module faceplate_grille(
     size,
@@ -207,11 +217,19 @@ module faceplate_grille(
     ray_count = 12,
     ray_width = 3,
     center_dia = 10,
-    // Standard faceplate options
+    // Mounting type
+    mounting = "magnetic",
+    // Magnetic mounting options
     steel_pockets = true,
     steel_inset = 12,
     steel_dia = 10,
     steel_depth = 1,
+    // Screw mounting options
+    screw_inset = 10,
+    screw_dia = 3.2,
+    countersink = true,
+    cs_dia = 6,
+    cs_depth = 1.5,
     anchor = BOT,
     spin = 0,
     orient = UP
@@ -223,12 +241,20 @@ module faceplate_grille(
     gw = is_undef(grille_size) ? width - grille_margin * 2 : grille_size[0];
     gh = is_undef(grille_size) ? height - grille_margin * 2 : grille_size[1];
 
-    // Steel pocket positions
+    // Steel pocket positions (for magnetic mounting)
     pocket_positions = [
         [ width/2 - steel_inset,  height/2 - steel_inset],
         [-width/2 + steel_inset,  height/2 - steel_inset],
         [-width/2 + steel_inset, -height/2 + steel_inset],
         [ width/2 - steel_inset, -height/2 + steel_inset]
+    ];
+
+    // Screw hole positions (for screw mounting)
+    screw_positions = [
+        [ width/2 - screw_inset,  height/2 - screw_inset],
+        [-width/2 + screw_inset,  height/2 - screw_inset],
+        [-width/2 + screw_inset, -height/2 + screw_inset],
+        [ width/2 - screw_inset, -height/2 + screw_inset]
     ];
 
     attachable(anchor, spin, orient, size=[width, height, thickness]) {
@@ -254,12 +280,28 @@ module faceplate_grille(
             }
 
             // Steel disc pockets for magnetic attachment
-            if (steel_pockets) {
+            if (mounting == "magnetic" && steel_pockets) {
                 tag("remove")
                 position(BOT)
                 for (pos = pocket_positions) {
                     translate([pos[0], pos[1], 0])
                     cyl(d=steel_dia + 0.3, h=steel_depth + 0.1, anchor=BOT, $fn=32);
+                }
+            }
+
+            // Screw holes for screw mounting
+            if (mounting == "screw") {
+                tag("remove")
+                for (pos = screw_positions) {
+                    translate([pos[0], pos[1], 0]) {
+                        // Through hole
+                        cyl(d=screw_dia, h=thickness + 1, anchor=CENTER, $fn=24);
+                        // Countersink (on top surface)
+                        if (countersink) {
+                            up(thickness/2 - cs_depth + 0.01)
+                            cyl(d1=screw_dia, d2=cs_dia, h=cs_depth + 0.01, anchor=BOT, $fn=24);
+                        }
+                    }
                 }
             }
         }
