@@ -71,32 +71,44 @@ module corner_bracket(
             union() {
                 // L-shape profile as a single extrusion with 3D chamfers
                 // Points define the L from external corner going clockwise
+                // Main external corner is split into two points for chamfer
+                c = chamfer > 0 ? chamfer : 0;
                 l_points = [
-                    [ext_corner.x, ext_corner.y],                    // External corner
-                    [ext_corner.x + wall*2, ext_corner.y],           // Along X-arm exterior
-                    [arm_width/2, ext_corner.y],                     // X-arm end exterior
-                    [arm_width/2, ext_corner.y + wall*2],            // X-arm end interior
-                    [ext_corner.x + wall*2, ext_corner.y + wall*2],  // Inner corner
-                    [ext_corner.x + wall*2, arm_width/2],            // Y-arm end interior
+                    [ext_corner.x + c, ext_corner.y],                // External corner - chamfer pt 1
+                    [ext_corner.x, ext_corner.y + c],                // External corner - chamfer pt 2
                     [ext_corner.x, arm_width/2],                     // Y-arm end exterior
+                    [ext_corner.x + wall*2, arm_width/2],            // Y-arm end interior
+                    [ext_corner.x + wall*2, ext_corner.y + wall*2],  // Inner corner
+                    [arm_width/2, ext_corner.y + wall*2],            // X-arm end interior
+                    [arm_width/2, ext_corner.y],                     // X-arm end exterior
                 ];
 
-                // Use offset_sweep for 3D chamfers on all edges
+                // Chamfer the 2D corners for vertical edge chamfers
+                // Skip tight interior corners, chamfer arm ends
+                corner_cuts = [0, 0, chamfer, 0, 0, 0, chamfer];
+                l_chamfered = chamfer > 0
+                    ? round_corners(l_points, cut=corner_cuts, method="chamfer", closed=true)
+                    : l_points;
+
+                // Use offset_sweep for top edge chamfer (bottom is flat for floor alignment)
                 up(bot_z)
                 offset_sweep(
-                    path=l_points,
+                    path=l_chamfered,
                     height=total_height,
-                    top=os_chamfer(chamfer),
-                    bottom=os_chamfer(chamfer)
+                    top=os_chamfer(chamfer)
                 );
 
                 // Floor piece at bottom corner for base panel
-                floor_size = ply_thickness * 2 + wall;
+                // Bottom flush with L-bracket bottom, chamfered outer edges
+                // Size and thickness match the bracket arms
+                floor_size = arm_width - wall;  // Slightly smaller than arm width
+                floor_thickness = wall * 2;     // Match arm thickness
                 floor_pos = [ext_corner.x + wall * 2 + floor_size/2,
                              ext_corner.y + wall * 2 + floor_size/2,
-                             bot_z + wall/2];
+                             bot_z];
                 translate(floor_pos)
-                cuboid([floor_size, floor_size, wall], anchor=CENTER);
+                cuboid([floor_size, floor_size, floor_thickness], anchor=BOT,
+                       chamfer=chamfer, edges=BOT);
             }
 
             // Optional screw holes - multiple along height
@@ -130,17 +142,18 @@ module corner_bracket(
 
             // Foot screw hole - countersunk on BOTTOM for screw head
             if (foot_hole) {
-                floor_size = ply_thickness * 2 + wall;
-                floor_center = [ext_corner.x + wall * 2 + floor_size/2,
-                                ext_corner.y + wall * 2 + floor_size/2];
+                foot_floor_size = arm_width - wall;
+                foot_floor_thickness = wall * 2;
+                floor_center = [ext_corner.x + wall * 2 + foot_floor_size/2,
+                                ext_corner.y + wall * 2 + foot_floor_size/2];
 
                 // Clearance hole through floor for screw
                 translate([floor_center.x, floor_center.y, bot_z - 0.1])
-                cyl(d=screw_dia, h=wall + 0.2, anchor=BOT, $fn=24);
+                cyl(d=screw_dia, h=foot_floor_thickness + 0.2, anchor=BOT, $fn=24);
 
                 // Countersink at BOTTOM of floor for screw head
                 translate([floor_center.x, floor_center.y, bot_z])
-                cyl(d1=screw_dia*2, d2=screw_dia, h=wall/2 + 0.1, anchor=BOT, $fn=24);
+                cyl(d1=screw_dia*2, d2=screw_dia, h=foot_floor_thickness/2 + 0.1, anchor=BOT, $fn=24);
             }
         }
 
@@ -270,11 +283,12 @@ module corner_foot(
 ) {
     attachable(anchor, spin, orient, size=[foot_dia, foot_dia, foot_height]) {
         difference() {
-            // Round foot body with optional chamfer on top edge
-            cyl(d=foot_dia, h=foot_height, anchor=CENTER, chamfer2=chamfer, $fn=32);
+            // Round foot body with chamfers on top and bottom edges
+            cyl(d=foot_dia, h=foot_height, anchor=CENTER,
+                chamfer1=chamfer, chamfer2=chamfer, $fn=32);
 
-            // Counterbore for screw head (from bottom)
-            translate([0, 0, -foot_height/2])
+            // Counterbore for screw head (from bottom, above chamfer)
+            translate([0, 0, -foot_height/2 + chamfer])
             cyl(d=head_dia, h=head_depth + 0.1, anchor=BOT, $fn=24);
 
             // Clearance hole for screw shaft (through entire foot)
@@ -293,8 +307,8 @@ if ($preview && is_undef($parent_modules)) {
         case_height = 50,
         ply_thickness = PLY_3_8,
         wall = 3,
-        slot_depth = 8,
         screw_holes = true,
+        chamfer = 1,
         anchor = BOT
     );
 }

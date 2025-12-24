@@ -147,7 +147,7 @@ module place_feet() {
     // Floor center relative to bracket center
     // In bracket: floor_pos = ext_corner + wall*2 + floor_size/2
     // where ext_corner = -arm_width/2
-    floor_size = PLY * 2 + WALL;
+    floor_size = ARM - WALL;  // Matches bracket floor_size = arm_width - wall
     floor_rel = -ARM/2 + WALL * 2 + floor_size/2;
 
     // Bracket centers (same as in place_corner_brackets)
