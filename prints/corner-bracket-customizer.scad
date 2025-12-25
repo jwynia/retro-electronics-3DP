@@ -163,9 +163,9 @@ module corner_foot() {
         cyl(d=Foot_Diameter, h=Foot_Height, anchor=BOT,
             chamfer1=chamfer, chamfer2=chamfer, $fn=32);
 
-        // Counterbore for screw head
-        translate([0, 0, chamfer])
-        cyl(d=screw_dia*2.5, h=Foot_Height/3 + 0.1, anchor=BOT, $fn=24);
+        // Countersink at bottom for flush screw head
+        translate([0, 0, -0.1])
+        cyl(d1=screw_dia*2.5, d2=screw_dia + 0.5, h=screw_dia*0.75 + 0.1, anchor=BOT, $fn=24);
 
         // Clearance hole
         cyl(d=screw_dia + 0.5, h=Foot_Height + 0.2, anchor=BOT, $fn=24);
