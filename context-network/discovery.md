@@ -56,6 +56,7 @@ Deep knowledge organized by technical domain.
 - [`hardware/`](domains/hardware/index.md) - Magnetic attachment, standoffs, mounting
 - [`profiles/`](domains/profiles/index.md) - 2D profile generation
 - [`bosl2-integration/`](domains/bosl2-integration/index.md) - BOSL2 library usage patterns
+- [`gridfinity/`](domains/gridfinity/overview.md) - Gridfinity modular storage integration
 - [`research-tools/`](domains/research-tools/index.md) - Web search and local dataset tools
 - [`external-libraries/`](domains/external-libraries/index.md) - NopSCADlib, PiHoles integration
 - [`design-language/`](domains/design-language/index.md) - Retro design references and patterns

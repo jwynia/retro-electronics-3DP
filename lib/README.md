@@ -22,6 +22,36 @@ https://github.com/BelfrySCAD/BOSL2
 
 Extract it to `lib/BOSL2/` so that `lib/BOSL2/std.scad` exists.
 
+## Gridfinity Rebuilt
+
+Gridfinity modular storage system generators from kennetek.
+https://github.com/kennetek/gridfinity-rebuilt-openscad
+
+**Key files:**
+- `gridfinity-rebuilt-baseplate.scad` - Baseplate generator
+- `gridfinity-rebuilt-bins.scad` - Bin generator
+- `gridfinity-rebuilt-lite.scad` - Simplified variant
+- `src/core/standard.scad` - Standard dimensions and constants
+
+**Usage:**
+```openscad
+include <gridfinity-rebuilt-openscad/src/core/standard.scad>
+include <gridfinity-rebuilt-openscad/gridfinity-rebuilt-baseplate.scad>
+```
+
+See `context-network/domains/gridfinity/overview.md` for integration details.
+
+## NopSCADlib
+
+Hardware components library including screws, nuts, PCB definitions, and more.
+Also includes a simpler Gridfinity implementation.
+
+## Other Libraries
+
+- **PiHoles** - Raspberry Pi mounting hole patterns
+- **battery_lib** - Battery dimension references
+- **knurled-openscad** - Knurled texture patterns
+
 ## Library Path
 
 OpenSCAD needs to find the libraries. Options:
