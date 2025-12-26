@@ -13,3 +13,6 @@
 [submodule "lib/battery_lib"]
 	path = lib/battery_lib
 	url = https://github.com/kartchnb/battery_lib.git
+[submodule "lib/gridfinity-rebuilt-openscad"]
+	path = lib/gridfinity-rebuilt-openscad
+	url = https://github.com/kennetek/gridfinity-rebuilt-openscad.git
