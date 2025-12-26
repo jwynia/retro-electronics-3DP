@@ -45,6 +45,9 @@ Foot_Diameter = 20; // [15:30]
 // Foot height
 Foot_Height = 8; // [5:15]
 
+// Use same material/color for feet as brackets
+Same_Material = false;
+
 /* [Output] */
 // What to generate
 Output = "Bracket + Foot"; // ["Bracket Only", "Foot Only", "Bracket + Foot", "Full Set (4+4)"]
@@ -115,8 +118,7 @@ module corner_bracket() {
                          ext_corner.y + wall * 2 + floor_size/2,
                          bot_z];
             translate(floor_pos)
-            cuboid([floor_size, floor_size, floor_thickness], anchor=BOT,
-                   chamfer=chamfer, edges=BOT);
+            cuboid([floor_size, floor_size, floor_thickness], anchor=BOT);
         }
 
         // Diamond screw holes
@@ -191,13 +193,14 @@ module print_foot() {
 // === OUTPUT GENERATION ===
 spacing = 10;
 floor_size = arm_width - wall;
+foot_color = Same_Material ? "teal" : "gray";
 
 if (Output == "Bracket Only") {
     color("teal")
     print_bracket();
 }
 else if (Output == "Foot Only") {
-    color("gray")
+    color(foot_color)
     print_foot();
 }
 else if (Output == "Bracket + Foot") {
@@ -206,7 +209,7 @@ else if (Output == "Bracket + Foot") {
     print_bracket();
 
     translate([arm_width/2 + spacing + Foot_Diameter/2, 0, 0])
-    color("gray")
+    color(foot_color)
     print_foot();
 }
 else if (Output == "Full Set (4+4)") {
@@ -225,7 +228,7 @@ else if (Output == "Full Set (4+4)") {
     translate([-total_foot_width/2 + Foot_Diameter/2, -total_height/2 - spacing - Foot_Diameter/2, 0]) {
         for (i = [0:3]) {
             translate([i * (Foot_Diameter + spacing), 0, 0])
-            color("gray")
+            color(foot_color)
             print_foot();
         }
     }
