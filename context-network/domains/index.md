@@ -97,6 +97,20 @@ Reference documentation for the industrial designers and iconic products that in
 - Iconic product catalog (Braun RT 20, Olivetti Divisumma, JVC Videosphere)
 - Parametric patterns derived from classic designs
 
+### [`parametric-patterns/`](parametric-patterns/index.md)
+**OpenSCAD Parametric Design Patterns**
+
+Comprehensive patterns extracted from production-quality Makerworld generators. **Reference for building professional parametric models.**
+
+**Contains:**
+- Customizer UI patterns (sections, widgets, validation)
+- Advanced BOSL2 usage (grid_copies, paths, sweep)
+- FDM optimization (teardrops, orientation, tolerances)
+- Parametric architecture (type dispatch, computed values)
+- Mechanical joints (threading, dovetails, snap-fits)
+- Pattern generation (honeycomb, textures, meshes)
+- External source patterns (YAPP, Gridfinity, BOSL2 hinges)
+
 ## Domain Structure Pattern
 
 Each domain follows a consistent structure:

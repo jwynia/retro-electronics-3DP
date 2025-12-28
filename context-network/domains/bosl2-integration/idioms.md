@@ -181,6 +181,7 @@ cuboid(size) {
 - [`common-mistakes.md`](common-mistakes.md) - What not to do
 - [`attachment-system.md`](attachment-system.md) - How attachments work
 - [`diff-tagging.md`](diff-tagging.md) - Boolean operations
+- [`../parametric-patterns/bosl2-advanced.md`](../parametric-patterns/bosl2-advanced.md) - Advanced BOSL2 patterns (grid_copies, paths, sweep)
 
 ## Metadata
 - **Created:** 2025-12-21

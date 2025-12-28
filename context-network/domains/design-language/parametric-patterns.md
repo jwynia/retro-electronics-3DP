@@ -300,6 +300,8 @@ stackable: true
 - [`designers.md`](designers.md) - Designer backgrounds
 - [`../../planning/preset-catalog.md`](../../planning/preset-catalog.md) - Preset implementation plans
 - [`../shells/`](../shells/index.md) - Shell modules
+- [`../parametric-patterns/`](../parametric-patterns/index.md) - OpenSCAD parametric patterns (extracted from Makerworld models)
+- [`../parametric-patterns/pattern-generation.md`](../parametric-patterns/pattern-generation.md) - 2D pattern generation (honeycomb, textures)
 
 ## Metadata
 - **Created:** 2025-12-22
