@@ -138,46 +138,47 @@ function calculateCutList(config: CaseConfig): CutPiece[] {
   const topWidth = interiorWidth;
   const topDepth = interiorDepth + armWidth * 2 - plyThickness * 2;
 
+  // Round UP to whole mm for practical woodworking
   return [
     {
       name: "Bottom Panel",
-      width: bottomWidth,
-      height: bottomDepth,
+      width: Math.ceil(bottomWidth),
+      height: Math.ceil(bottomDepth),
       quantity: 1,
       notes: "Full exterior footprint - all sides sit on this"
     },
     {
       name: "Side Panel (Left)",
-      width: sidePanelDepth,
-      height: sidePanelHeight,
+      width: Math.ceil(sidePanelDepth),
+      height: Math.ceil(sidePanelHeight),
       quantity: 1,
-      notes: `Full depth, sits on bottom, height includes top ply (${plyThickness.toFixed(1)}mm)`
+      notes: "Full depth, sits on bottom"
     },
     {
       name: "Side Panel (Right)",
-      width: sidePanelDepth,
-      height: sidePanelHeight,
+      width: Math.ceil(sidePanelDepth),
+      height: Math.ceil(sidePanelHeight),
       quantity: 1,
-      notes: `Full depth, sits on bottom, height includes top ply (${plyThickness.toFixed(1)}mm)`
+      notes: "Full depth, sits on bottom"
     },
     {
       name: "Front Panel",
-      width: frontBackWidth,
-      height: frontBackHeight,
+      width: Math.ceil(frontBackWidth),
+      height: Math.ceil(frontBackHeight),
       quantity: 1,
       notes: "Fits between sides, sits on bottom"
     },
     {
       name: "Back Panel",
-      width: frontBackWidth,
-      height: frontBackHeight,
+      width: Math.ceil(frontBackWidth),
+      height: Math.ceil(frontBackHeight),
       quantity: 1,
       notes: "Fits between sides, sits on bottom"
     },
     {
       name: "Top Panel (optional)",
-      width: topWidth,
-      height: topDepth,
+      width: Math.ceil(topWidth),
+      height: Math.ceil(topDepth),
       quantity: 1,
       notes: "Fits between sides, sits on front/back"
     }
@@ -251,7 +252,8 @@ function calculateCase(config: CaseConfig): CaseCalculation {
 // ============================================
 
 function formatMM(mm: number): string {
-  return `${mm.toFixed(1)}mm`;
+  // Show whole numbers without decimals, others with 1 decimal
+  return Number.isInteger(mm) ? `${mm}mm` : `${mm.toFixed(1)}mm`;
 }
 
 function formatInches(mm: number): string {
@@ -346,6 +348,72 @@ function printReport(calc: CaseCalculation): void {
   }
 
   console.log("\n" + "=".repeat(60));
+}
+
+function generateCutListSVG(cutList: CutPiece[], scale: number = 0.4): string {
+  const padding = 30;      // padding between panels
+  const labelHeight = 40;  // space for labels below each panel
+
+  // Arrange in 2 columns: [Bottom, Left, Right] and [Front, Back, Top]
+  const col1 = cutList.slice(0, 3);  // Bottom, Left Side, Right Side
+  const col2 = cutList.slice(3, 6);  // Front, Back, Top
+
+  // Calculate column widths (max width in each column)
+  const col1Width = Math.max(...col1.map(p => p.width * scale));
+  const col2Width = Math.max(...col2.map(p => p.width * scale));
+
+  // Calculate total heights for each column
+  const col1Height = col1.reduce((sum, p) => sum + p.height * scale + labelHeight + padding, 0);
+  const col2Height = col2.reduce((sum, p) => sum + p.height * scale + labelHeight + padding, 0);
+
+  // SVG dimensions
+  const svgWidth = padding + col1Width + padding * 2 + col2Width + padding;
+  const svgHeight = Math.max(col1Height, col2Height) + padding;
+
+  // Build SVG
+  let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${Math.ceil(svgWidth)}" height="${Math.ceil(svgHeight)}" viewBox="0 0 ${Math.ceil(svgWidth)} ${Math.ceil(svgHeight)}" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .panel { fill: #f5deb3; stroke: #654321; stroke-width: 2; }
+    .panel-name { font-family: sans-serif; font-size: 14px; font-weight: bold; fill: #333; }
+    .panel-dims { font-family: monospace; font-size: 12px; fill: #666; }
+    .title { font-family: sans-serif; font-size: 16px; font-weight: bold; fill: #333; }
+  </style>
+  <rect width="100%" height="100%" fill="#fafafa"/>
+`;
+
+  // Helper to draw a panel
+  const drawPanel = (piece: CutPiece, x: number, y: number): string => {
+    const w = piece.width * scale;
+    const h = piece.height * scale;
+    const centerX = x + w / 2;
+
+    return `
+  <g>
+    <rect class="panel" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>
+    <text class="panel-name" x="${centerX.toFixed(1)}" y="${(y + h + 18).toFixed(1)}" text-anchor="middle">${piece.name.replace(" (optional)", "")}</text>
+    <text class="panel-dims" x="${centerX.toFixed(1)}" y="${(y + h + 34).toFixed(1)}" text-anchor="middle">${piece.width} x ${piece.height} mm</text>
+  </g>`;
+  };
+
+  // Draw column 1
+  let y = padding;
+  const col1X = padding;
+  for (const piece of col1) {
+    svg += drawPanel(piece, col1X, y);
+    y += piece.height * scale + labelHeight + padding;
+  }
+
+  // Draw column 2
+  y = padding;
+  const col2X = padding + col1Width + padding * 2;
+  for (const piece of col2) {
+    svg += drawPanel(piece, col2X, y);
+    y += piece.height * scale + labelHeight + padding;
+  }
+
+  svg += "\n</svg>";
+  return svg;
 }
 
 function generateScadFile(calc: CaseCalculation): string {
@@ -601,6 +669,7 @@ Options:
   -g, --gridfinity      Enable Gridfinity mode (auto-calculate grid from size)
   --baseplate <style>   Baseplate style: thin, standard, weighted (default: standard)
   -o, --output <file>   Write OpenSCAD config to file
+  -s, --svg <file>      Write cut list visualization to SVG file
   --help                Show this help
 
 Gridfinity dimensions: 42mm per grid unit, 7mm per height unit
@@ -639,7 +708,7 @@ function parseGridSpec(spec: string): GridfinitySpec | null {
 // Main
 if (import.meta.main) {
   const args = parse(Deno.args, {
-    string: ["width", "depth", "height", "ply", "wall", "tolerance", "output", "baseplate", "grid", "margin"],
+    string: ["width", "depth", "height", "ply", "wall", "tolerance", "output", "baseplate", "grid", "margin", "svg"],
     boolean: ["gridfinity", "help", "round-down"],
     alias: {
       w: "width",
@@ -647,7 +716,8 @@ if (import.meta.main) {
       h: "height",
       p: "ply",
       g: "gridfinity",
-      o: "output"
+      o: "output",
+      s: "svg"
     },
     default: {
       ply: "3/8",
@@ -758,5 +828,11 @@ if (import.meta.main) {
     const scadContent = generateScadFile(calculation);
     await Deno.writeTextFile(args.output as string, scadContent);
     console.log(`\nOpenSCAD config written to: ${args.output}`);
+  }
+
+  if (args.svg) {
+    const svgContent = generateCutListSVG(calculation.cutList);
+    await Deno.writeTextFile(args.svg as string, svgContent);
+    console.log(`\nCut list SVG written to: ${args.svg}`);
   }
 }
