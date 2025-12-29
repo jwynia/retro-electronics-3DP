@@ -12,17 +12,17 @@ OUTPUT_DIR="$PROJECT_ROOT/test-renders"
 # Default settings
 IMGSIZE="800,600"
 COLORSCHEME="Tomorrow"
+DISTANCE="450"
 
-# Camera preset lookup (returns: translateX,Y,Z,rotX,Y,Z,distance)
-# Distance of 450 ensures most objects fit in frame
+# Camera preset lookup (returns: translateX,Y,Z,rotX,Y,Z - distance added separately)
 get_camera() {
     case "$1" in
-        front)  echo "0,0,0,90,0,0,450" ;;
-        top)    echo "0,0,0,0,0,0,450" ;;
-        iso)    echo "0,0,0,55,0,45,450" ;;
-        right)  echo "0,0,0,90,0,90,450" ;;
-        back)   echo "0,0,0,90,0,180,450" ;;
-        *)      echo "0,0,30,55,0,25,450" ;;  # default (slightly raised)
+        front)  echo "0,0,0,90,0,0" ;;
+        top)    echo "0,0,0,0,0,0" ;;
+        iso)    echo "0,0,0,55,0,45" ;;
+        right)  echo "0,0,0,90,0,90" ;;
+        back)   echo "0,0,0,90,0,180" ;;
+        *)      echo "0,0,30,55,0,25" ;;  # default (slightly raised)
     esac
 }
 
@@ -30,18 +30,19 @@ usage() {
     echo "Usage: $0 [options] <file.scad> [camera-preset]"
     echo ""
     echo "Options:"
-    echo "  --all         Render all files in examples/"
-    echo "  --size WxH    Image size (default: 800,600)"
-    echo "  --stl         Also export STL"
-    echo "  --help        Show this help"
+    echo "  --all           Render all files in examples/"
+    echo "  --size WxH      Image size (default: 800,600)"
+    echo "  --distance N    Camera distance (default: 450, use 600-800 for large scenes)"
+    echo "  --stl           Also export STL"
+    echo "  --help          Show this help"
     echo ""
     echo "Camera presets: default, front, top, iso, right, back"
     echo ""
     echo "Examples:"
     echo "  $0 examples/01-basic-rounded-box.scad"
     echo "  $0 examples/02-wedge-shell.scad front"
+    echo "  $0 --distance 700 examples/19-font-sampler.scad top"
     echo "  $0 --all"
-    echo "  $0 --stl modules/shells/monolithic.scad"
 }
 
 render_file() {
@@ -54,8 +55,8 @@ render_file() {
         return 1
     fi
 
-    # Get camera for preset
-    CAM=$(get_camera "$PRESET")
+    # Get camera for preset (add distance)
+    CAM="$(get_camera "$PRESET"),$DISTANCE"
 
     # Generate output filename
     BASENAME=$(basename "$INPUT_FILE" .scad)
@@ -146,6 +147,10 @@ while [ $# -gt 0 ]; do
             ;;
         --size)
             IMGSIZE="$2"
+            shift 2
+            ;;
+        --distance|-d)
+            DISTANCE="$2"
             shift 2
             ;;
         --help|-h)
